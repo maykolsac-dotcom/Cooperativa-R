@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cooperativa · Sistema Contable</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Google APIs -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1B2A4A;--navy2:#243F6B;--navy3:#0D1B32;
+  --gold:#B8960C;--goldl:#FEF9E7;--goldb:#D4AF37;
+  --green:#1E6B3A;--greenl:#E8F5E9;
+  --red:#7F0000;--redl:#FFEBEE;
+  --amb:#BF360C;--ambl:#FFF8E1;
+  --teal:#0F6E56;
+  --bg:#F4F6FA;--bg2:#EAECF4;
+  --border:#D0D5E8;--border2:#E8EAF2;
+  --text:#1B2A4A;--text2:#4A5568;--text3:#8A94A6;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+  --radius:10px;--radius-lg:14px;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13px}
+input,select,textarea,button{font-family:var(--sans)}
+input,select{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);background:#fff;outline:none;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus{border-color:var(--navy2);box-shadow:0 0 0 3px rgba(36,63,107,.1)}
+input:disabled,select:disabled{background:#f5f5f5;color:#aaa;cursor:not-allowed}
+table{width:100%;border-collapse:collapse}
+th{background:var(--navy);color:#fff;padding:9px 13px;font-size:11px;font-weight:500;text-align:left;white-space:nowrap;letter-spacing:.04em;text-transform:uppercase}
+th.r{text-align:right}th.c{text-align:center}
+td{padding:8px 13px;font-size:12.5px;border-bottom:1px solid var(--border2);color:var(--text);vertical-align:middle}
+td.r{text-align:right}td.c{text-align:center}td.b{font-weight:600}td.g{color:var(--text3);font-size:11.5px}
+.row-alt{background:#F8F9FC}.row-even{background:#fff}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.04em}
+.badge-p{background:#E8F5E9;color:#1E6B3A;border:1px solid #A5D6A7}
+.badge-pen{background:#FFF8E1;color:#BF360C;border:1px solid #FFD54F}
+.badge-v{background:#FFEBEE;color:#7F0000;border:1px solid #EF9A9A}
+.badge-a{background:#E3F2FD;color:#0D47A1;border:1px solid #90CAF9}
+.badge-lector{background:#F3E8FF;color:#6B21A8;border:1px solid #D8B4FE}
+.badge-editor{background:#DCFCE7;color:#166534;border:1px solid #86EFAC}
+.btn{border:none;border-radius:8px;padding:8px 16px;font-size:12.5px;font-weight:500;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-navy{background:var(--navy);color:#fff}.btn-navy:hover{background:var(--navy2)}
+.btn-gold{background:var(--gold);color:#fff}.btn-gold:hover{background:#9a7e0a}
+.btn-green{background:#E8F5E9;color:var(--green);border:1.5px solid #A5D6A7}.btn-green:hover{background:#d4eeda}
+.btn-red{background:#FFEBEE;color:var(--red);border:1.5px solid #EF9A9A}.btn-red:hover{background:#fdd8dc}
+.btn-amber{background:#FFF8E1;color:var(--amb);border:1.5px solid #FFD54F}.btn-amber:hover{background:#fff0c2}
+.btn-sm{padding:4px 10px;font-size:10.5px;border-radius:6px}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text2)}.btn-outline:hover{border-color:var(--navy2);color:var(--navy)}
+.btn-danger{background:#FFEBEE;color:var(--red);border:1.5px solid #EF9A9A}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+.card{background:#fff;border-radius:var(--radius-lg);border:1px solid var(--border2);overflow:hidden}
+.card-pad{padding:18px 22px}
+.kpi{background:#fff;border-radius:var(--radius-lg);border:1px solid var(--border2);padding:16px 20px}
+.sec-title{font-size:18px;font-weight:600;color:var(--text);margin-bottom:3px}
+.sec-sub{font-size:12px;color:var(--text3);margin-bottom:18px}
+.field-lbl{display:block;font-size:11.5px;font-weight:500;color:var(--text2);margin-bottom:5px;letter-spacing:.02em}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.modal-overlay{position:fixed;inset:0;background:rgba(10,18,38,.55);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;backdrop-filter:blur(3px)}
+.modal-box{background:#fff;border-radius:16px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:92vh;overflow-y:auto}
+.modal-box.wide{max-width:680px}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border2);background:#fff;border-radius:16px 16px 0 0}
+.modal-body{padding:20px 22px}
+.modal-title{font-size:15px;font-weight:600;color:var(--text)}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);line-height:1;padding:4px 6px;border-radius:6px}
+.modal-close:hover{background:var(--bg2);color:var(--text)}
+.info-box{border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px}
+.info-gold{background:#FEF9E7;border:1px solid #F0D060;color:#8a6800}
+.info-blue{background:#E3F2FD;border:1px solid #90CAF9;color:#0D47A1}
+.info-red{background:#FFEBEE;border:1px solid #EF9A9A;color:#7F0000}
+.info-green{background:#E8F5E9;border:1px solid #A5D6A7;color:#1E6B3A}
+.tfoot-row{background:var(--navy)}.tfoot-row td{color:#fff;font-size:12.5px;font-weight:500;border:none}
+.empty-state{text-align:center;padding:50px 20px}
+.empty-ico{font-size:36px;margin-bottom:12px}
+.empty-ttl{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:5px}
+.empty-sub{font-size:12px;color:var(--text3)}
+.tip-box{background:#FFF8E1;border:1px solid #FFD54F;border-radius:10px;padding:10px 14px;margin-top:14px;font-size:12px;color:var(--amb)}
+.aporte-card{border-radius:10px;padding:14px 12px;text-align:center;border:1.5px solid var(--border);background:#fff}
+.aporte-card-name{font-size:11.5px;font-weight:600;color:var(--navy);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.aporte-card-val{font-size:15px;font-weight:600;font-family:var(--mono);color:var(--text);margin-bottom:3px}
+.aporte-card-pct{font-size:11px;color:var(--text3)}
+.pct-bar-wrap{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.pct-bar-bg{width:44px;height:5px;background:var(--bg2);border-radius:3px;overflow:hidden}
+.pct-bar-fill{height:5px;background:var(--navy);border-radius:3px}
+.mono{font-family:var(--mono)}
+.edit-btn{background:#EEF2FF;color:#3730A3;border:1px solid #C7D2FE;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:600;cursor:pointer}
+.del-btn{background:#FFEBEE;color:var(--red);border:1px solid #EF9A9A;border-radius:5px;padding:3px 8px;font-size:10px;font-weight:600;cursor:pointer}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:opacity .2s;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.2);white-space:nowrap}
+.toast.show{opacity:1}
+.divider{height:1px;background:var(--border2);margin:14px 0}
+.socio-tag{display:inline-flex;align-items:center;gap:6px;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:500;color:#3730A3;margin:3px}
+.socio-tag button{background:none;border:none;cursor:pointer;color:#7C3AED;font-size:16px;line-height:1;padding:0}
+.preview-box{background:var(--goldl);border:1px solid var(--gold);border-radius:8px;padding:10px 14px;font-size:12.5px;margin-bottom:12px}
+.mb10{margin-bottom:10px}.mb14{margin-bottom:14px}
+/* Sync indicator */
+.sync-bar{display:flex;align-items:center;gap:8px;padding:6px 20px;background:#1a2540;font-size:11px}
+.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sync-dot.ok{background:#4ade80}
+.sync-dot.saving{background:#facc15;animation:pulse .8s infinite}
+.sync-dot.error{background:#f87171}
+.sync-dot.offline{background:#94a3b8}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* Login screen */
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy3)}
+.login-card{background:#fff;border-radius:20px;padding:40px;max-width:420px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.login-logo{font-size:40px;margin-bottom:16px}
+.login-title{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.login-sub{font-size:13px;color:var(--text3);margin-bottom:28px;line-height:1.6}
+.login-divider{height:1px;background:var(--border2);margin:20px 0}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:12px 20px;border:2px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;font-size:14px;font-weight:500;color:var(--text);transition:all .15s}
+.google-btn:hover{border-color:#4285F4;background:#F8FAFF;transform:translateY(-1px);box-shadow:0 4px 16px rgba(66,133,244,.2)}
+.google-btn img{width:20px;height:20px}
+.role-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;margin-top:8px}
+.setup-step{background:var(--bg);border-radius:12px;padding:16px;margin-bottom:10px;text-align:left}
+.setup-step-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;font-weight:700;margin-right:8px;flex-shrink:0}
+.step-code{background:#1e293b;color:#94d2bd;border-radius:6px;padding:6px 10px;font-family:var(--mono);font-size:11px;margin-top:6px;word-break:break-all}
+/* Calendario */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:10px}
+.cal-head-cell{text-align:center;font-size:10px;font-weight:700;color:var(--text3);padding:6px 2px;text-transform:uppercase;letter-spacing:.05em}
+.cal-cell{min-height:64px;border-radius:8px;padding:5px 6px;border:1px solid var(--border2);background:#fff;position:relative;font-size:11px}
+.cal-cell.other-month{background:var(--bg2);opacity:.5}
+.cal-cell.today{border:2px solid var(--navy2);background:#EEF4FF}
+.cal-cell.has-events{border-color:#FFD54F}
+.cal-day-num{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:3px}
+.cal-cell.today .cal-day-num{color:var(--navy2);font-weight:700}
+.cal-event{display:block;background:#FFF3E0;border-left:3px solid var(--amb);border-radius:3px;padding:2px 4px;font-size:9.5px;color:var(--amb);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;font-weight:500}
+.cal-event.venc-pasado{background:#FFEBEE;border-left-color:var(--red);color:var(--red)}
+.cal-event.venc-hoy{background:#E8F5E9;border-left-color:var(--green);color:var(--green)}
+.cal-nav{display:flex;align-items:center;gap:10px}
+.cal-nav button{background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:5px 12px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text2)}
+.cal-nav button:hover{background:var(--border)}
+.cal-month-title{font-size:15px;font-weight:600;color:var(--text);min-width:180px;text-align:center}
+.cal-legend{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
+.cal-legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3)}
+.cal-legend-dot{width:10px;height:10px;border-radius:2px}
+.upcoming-list{display:flex;flex-direction:column;gap:8px}
+.upcoming-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;border:1px solid var(--border2);background:#fff}
+.upcoming-date-box{text-align:center;min-width:44px;padding:6px;border-radius:8px;background:var(--goldl);border:1px solid #FFD54F}
+.upcoming-date-day{font-size:18px;font-weight:700;font-family:var(--mono);color:var(--amb);line-height:1}
+.upcoming-date-mon{font-size:9px;font-weight:600;color:var(--amb);text-transform:uppercase;letter-spacing:.06em}
+.upcoming-item.venc-pasado .upcoming-date-box{background:var(--redl);border-color:#EF9A9A}
+.upcoming-item.venc-pasado .upcoming-date-day,.upcoming-item.venc-pasado .upcoming-date-mon{color:var(--red)}
+.upcoming-item.venc-hoy .upcoming-date-box{background:#E8F5E9;border-color:#A5D6A7}
+.upcoming-item.venc-hoy .upcoming-date-day,.upcoming-item.venc-hoy .upcoming-date-mon{color:var(--green)}
+/* Permisos */
+.user-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid var(--border2);background:#fff;margin-bottom:6px}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:var(--navy2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0}
+/* Readonly overlay */
+.readonly-notice{background:#F3E8FF;border:1.5px solid #D8B4FE;border-radius:10px;padding:10px 16px;margin:16px 20px 0;font-size:12px;color:#6B21A8;display:flex;align-items:center;gap:8px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+//  CONFIGURACIÓN — Reemplaza estos valores con los tuyos
+// ══════════════════════════════════════════════════════════════════
+const CONFIG = {
+  // Obtén estos valores en console.cloud.google.com (ver guía al final del archivo)
+  CLIENT_ID: '538517964746-0ug2f4qaro40tvpuh9hgths3klsfgj45.apps.googleusercontent.com',
+  API_KEY:   'AIzaSyDxF0WuFqFPXc7bA_fZwSOsfdWHnsH8YGM',
+  // No cambies estas líneas
+  SCOPES:    'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file',
+  DATA_FILE: 'cooperativa_datos.json',
+  PERM_FILE: 'cooperativa_permisos.json',
+};
+const CONFIG_LISTO = !CONFIG.CLIENT_ID.includes('TU_CLIENT_ID');
+
+// ══════════════════════════════════════════════════════════════════
+//  UTILIDADES
+// ══════════════════════════════════════════════════════════════════
+const qs = s => document.querySelector(s);
+const sol = n => 'S/ '+(Math.round((+n||0)*100)/100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+const pctF = n => ((+n||0)*100).toFixed(1)+'%';
+const getInt = p => (+p.monto)*(+p.interesPct/100)*(+p.meses);
+function hoyStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+let _toastT; function toast(m,d=2800){const t=qs('#toast');t.textContent=m;t.classList.add('show');clearTimeout(_toastT);_toastT=setTimeout(()=>t.classList.remove('show'),d);}
+
+// ══════════════════════════════════════════════════════════════════
+//  DATOS POR DEFECTO
+// ══════════════════════════════════════════════════════════════════
+const DEFAULT_SOCIOS=['ARON','FELIPE','THEYLOR','MARGOTH','MAYKOL'];
+const DEFAULT_AP=[
+  {id:1,fecha:'2026-03-01',socio:'ARON',monto:2890,tipo:'Aporte inicial',concepto:'Constitución de la cooperativa'},
+  {id:2,fecha:'2026-03-01',socio:'FELIPE',monto:345,tipo:'Aporte inicial',concepto:'Constitución de la cooperativa'},
+  {id:3,fecha:'2026-03-01',socio:'THEYLOR',monto:100,tipo:'Aporte inicial',concepto:'Constitución de la cooperativa'},
+  {id:4,fecha:'2026-05-01',socio:'MARGOTH',monto:50,tipo:'Aporte adicional',concepto:'Ingreso nuevo socio'},
+  {id:5,fecha:'2026-05-01',socio:'MAYKOL',monto:100,tipo:'Aporte adicional',concepto:'Ingreso nuevo socio'},
+];
+const DEFAULT_PR=[
+  {id:1,cliente:'DORGEE',fecha:'2026-04-07',monto:100,interesPct:15,meses:1,fechaVenc:'2026-05-07',estado:'PAGADO'},
+  {id:2,cliente:'Mama de Felipe',fecha:'2026-04-14',monto:100,interesPct:20,meses:1,fechaVenc:'2026-05-14',estado:'PAGADO'},
+  {id:3,cliente:'Mama de Felipe',fecha:'2026-04-16',monto:800,interesPct:8.75,meses:1,fechaVenc:'2026-05-16',estado:'PAGADO'},
+  {id:4,cliente:'Mama de Felipe',fecha:'2026-04-21',monto:177.57,interesPct:15,meses:1,fechaVenc:'2026-05-21',estado:'PAGADO'},
+  {id:5,cliente:'Mama de Felipe',fecha:'2026-04-21',monto:200,interesPct:20,meses:1,fechaVenc:'2026-05-21',estado:'PAGADO'},
+  {id:6,cliente:'RHOY',fecha:'2026-04-20',monto:300,interesPct:15,meses:1,fechaVenc:'2026-05-20',estado:'PAGADO'},
+  {id:7,cliente:'CHICHO',fecha:'2026-04-23',monto:200,interesPct:15,meses:1,fechaVenc:'2026-05-23',estado:'PENDIENTE'},
+  {id:8,cliente:'FELIPE',fecha:'2026-04-27',monto:248.86,interesPct:5,meses:1,fechaVenc:'2026-05-27',estado:'PENDIENTE'},
+  {id:9,cliente:'RHOY',fecha:'2026-04-27',monto:120,interesPct:15,meses:1,fechaVenc:'2026-05-27',estado:'PENDIENTE'},
+  {id:10,cliente:'DORGEE',fecha:'2026-05-06',monto:100,interesPct:15,meses:1,fechaVenc:'2026-06-06',estado:'PENDIENTE'},
+  {id:11,cliente:'VALIA',fecha:'2026-05-05',monto:100,interesPct:15,meses:1,fechaVenc:'2026-06-05',estado:'PAGADO'},
+  {id:12,cliente:'DORGEE',fecha:'2026-05-13',monto:100,interesPct:15,meses:1,fechaVenc:'2026-06-13',estado:'PENDIENTE'},
+  {id:13,cliente:'CHICHO',fecha:'2026-05-14',monto:115,interesPct:15,meses:1,fechaVenc:'2026-06-14',estado:'PENDIENTE'},
+  {id:14,cliente:'PIERO',fecha:'2026-05-07',monto:150,interesPct:15,meses:1,fechaVenc:'2026-06-07',estado:'PENDIENTE'},
+  {id:15,cliente:'CHAMO',fecha:'2026-05-16',monto:500,interesPct:20,meses:1,fechaVenc:'2026-06-16',estado:'PENDIENTE'},
+  {id:16,cliente:'Mama de Felipe',fecha:'2026-05-16',monto:1200,interesPct:15,meses:1,fechaVenc:'2026-06-16',estado:'PENDIENTE'},
+  {id:17,cliente:'VALIA',fecha:'2026-05-18',monto:200,interesPct:15,meses:1,fechaVenc:'2026-06-18',estado:'PENDIENTE'},
+];
+
+// ══════════════════════════════════════════════════════════════════
+//  GOOGLE DRIVE API
+// ══════════════════════════════════════════════════════════════════
+let tokenClient = null;
+let accessToken = null;
+let driveFileId  = null; // ID del JSON de datos en Drive
+let permFileId   = null; // ID del JSON de permisos en Drive
+let saveTimer    = null;
+let syncStatus   = 'offline'; // ok | saving | error | offline
+let currentUser  = null; // {email, name, picture}
+let currentRole  = null; // 'admin' | 'editor' | 'lector'
+let permisos     = [];   // [{email, nombre, rol}]
+
+function setSyncStatus(s){
+  syncStatus=s;
+  const dot=qs('.sync-dot');
+  const txt=qs('.sync-txt');
+  if(!dot||!txt)return;
+  dot.className='sync-dot '+s;
+  const msgs={ok:'Guardado en Google Drive',saving:'Guardando...',error:'Error al guardar — reintentando',offline:'Sin conexión a Drive'};
+  txt.textContent=msgs[s]||s;
+}
+
+async function driveRequest(url, opts={}){
+  const res = await fetch(url,{...opts,headers:{...opts.headers,'Authorization':'Bearer '+accessToken}});
+  if(res.status===401){accessToken=null;render();throw new Error('Token expirado');}
+  return res;
+}
+
+async function buscarOCrearArchivo(nombre){
+  // Buscar en Drive (appDataFolder para privacidad o root)
+  const q = encodeURIComponent(`name='${nombre}' and trashed=false`);
+  const r = await driveRequest(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&spaces=drive`);
+  const d = await r.json();
+  if(d.files&&d.files.length>0) return d.files[0].id;
+  // Crear archivo nuevo
+  const meta = JSON.stringify({name:nombre,mimeType:'application/json'});
+  const cr = await driveRequest('https://www.googleapis.com/drive/v3/files',{
+    method:'POST',headers:{'Content-Type':'application/json'},body:meta
+  });
+  const f = await cr.json();
+  return f.id;
+}
+
+async function leerArchivoJSON(fileId){
+  const r = await driveRequest(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+  if(r.status===404) return null;
+  try{ return await r.json(); }catch(e){ return null; }
+}
+
+async function guardarArchivoJSON(fileId, data){
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const r = await driveRequest(
+    `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+    {method:'PATCH',headers:{'Content-Type':'application/json'},body:blob}
+  );
+  return r.ok;
+}
+
+// Guardar datos con debounce de 1.5s
+function programarGuardado(){
+  setSyncStatus('saving');
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>ejecutarGuardado(),1500);
+}
+
+async function ejecutarGuardado(){
+  if(!driveFileId||!accessToken)return;
+  try{
+    const ok = await guardarArchivoJSON(driveFileId,{
+      socios:STATE.socios, aportes:STATE.aportes,
+      prestamos:STATE.prestamos, pagos:STATE.pagos, nombre:STATE.nombre,
+      ultimaActualizacion:new Date().toISOString(),
+      actualizadoPor:currentUser?.email||'desconocido'
+    });
+    setSyncStatus(ok?'ok':'error');
+    if(!ok)setTimeout(ejecutarGuardado,5000);
+  }catch(e){setSyncStatus('error');setTimeout(ejecutarGuardado,5000);}
+}
+
+async function cargarDatosDesdesDrive(){
+  if(!driveFileId)return;
+  const d = await leerArchivoJSON(driveFileId);
+  if(d){
+    STATE.socios    = d.socios    || [...DEFAULT_SOCIOS];
+    STATE.aportes   = d.aportes   || DEFAULT_AP.map(a=>({...a}));
+    STATE.prestamos = d.prestamos || DEFAULT_PR.map(p=>({...p}));
+    STATE.pagos     = d.pagos     || [];
+    STATE.nombre    = d.nombre    || 'Cooperativa';
+  }
+}
+
+async function cargarPermisos(){
+  if(!permFileId)return;
+  const d = await leerArchivoJSON(permFileId);
+  if(d&&Array.isArray(d.permisos)) permisos=d.permisos;
+}
+
+async function guardarPermisos(){
+  if(!permFileId)return;
+  await guardarArchivoJSON(permFileId,{permisos});
+}
+
+function getRolUsuario(email){
+  if(!email)return 'lector';
+  const p=permisos.find(x=>x.email.toLowerCase()===email.toLowerCase());
+  return p?p.rol:'lector';
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  FLUJO DE AUTENTICACIÓN
+// ══════════════════════════════════════════════════════════════════
+let gapiReady=false, gsiReady=false;
+
+window.onGapiLoad = function(){
+  gapi.load('client',async()=>{
+    await gapi.client.init({apiKey:CONFIG.API_KEY,discoveryDocs:[]});
+    gapiReady=true; intentarAutoLogin();
+  });
+};
+window.onGsiLoad = function(){
+  if(!CONFIG_LISTO)return;
+  tokenClient=google.accounts.oauth2.initTokenClient({
+    client_id:CONFIG.CLIENT_ID,
+    scope:CONFIG.SCOPES,
+    callback:async(resp)=>{
+      if(resp.error){setSyncStatus('error');return;}
+      accessToken=resp.access_token;
+      await finalizarLogin();
+    }
+  });
+  gsiReady=true; intentarAutoLogin();
+};
+
+function intentarAutoLogin(){
+  if(!gapiReady||!gsiReady)return;
+  // Intentar token silencioso
+  const saved=sessionStorage.getItem('cx_token');
+  if(saved){accessToken=saved;finalizarLogin();}
+  else render(); // Mostrar pantalla de login
+}
+
+async function finalizarLogin(){
+  STATE.cargando=true; render();
+  try{
+    // Obtener info del usuario
+    const r=await driveRequest('https://www.googleapis.com/oauth2/v3/userinfo');
+    currentUser=await r.json();
+    sessionStorage.setItem('cx_token',accessToken);
+    // Buscar/crear archivos en Drive
+    [driveFileId,permFileId]=await Promise.all([
+      buscarOCrearArchivo(CONFIG.DATA_FILE),
+      buscarOCrearArchivo(CONFIG.PERM_FILE)
+    ]);
+    // Cargar permisos primero
+    await cargarPermisos();
+    // Si es el primer admin (sin permisos aún) → asignar rol admin
+    if(permisos.length===0){
+      permisos=[{email:currentUser.email,nombre:currentUser.name||currentUser.email,rol:'admin'}];
+      await guardarPermisos();
+    }
+    currentRole=getRolUsuario(currentUser.email);
+    // Si es admin o editor → cargar datos del Drive
+    if(currentRole==='admin'||currentRole==='editor'){
+      await cargarDatosDesdesDrive();
+    } else {
+      // Lector → también carga datos pero no puede editar
+      await cargarDatosDesdesDrive();
+    }
+    STATE.cargando=false; setSyncStatus('ok'); render();
+  }catch(e){
+    STATE.cargando=false; accessToken=null; sessionStorage.removeItem('cx_token');
+    render();
+  }
+}
+
+function iniciarLogin(){
+  if(!CONFIG_LISTO){abrirModal('setup');return;}
+  if(!gsiReady){toast('⏳ Cargando APIs de Google...');return;}
+  tokenClient.requestAccessToken({prompt:'consent'});
+}
+
+function cerrarSesion(){
+  if(accessToken) google.accounts.oauth2.revoke(accessToken,()=>{});
+  accessToken=null; currentUser=null; currentRole=null;
+  sessionStorage.removeItem('cx_token');
+  clearTimeout(saveTimer); render();
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  ESTADO GLOBAL
+// ══════════════════════════════════════════════════════════════════
+let STATE={
+  view:'dashboard',
+  socios:[...DEFAULT_SOCIOS],
+  aportes:DEFAULT_AP.map(a=>({...a})),
+  prestamos:DEFAULT_PR.map(p=>({...p})),
+  pagos:[],
+  nombre:'Cooperativa',
+  aiText:'',aiLoading:false,
+  calYear:new Date().getFullYear(),
+  calMonth:new Date().getMonth(),
+  cargando:false,
+};
+
+// guardar = siempre a Drive, con debounce
+function guardar(){ if(accessToken&&(currentRole==='admin'||currentRole==='editor')) programarGuardado(); }
+function guardarTodo(){ guardar(); }
+
+// ══════════════════════════════════════════════════════════════════
+//  LÓGICA DE NEGOCIO
+// ══════════════════════════════════════════════════════════════════
+function estadoEfectivo(p){
+  if(p.estado==='PAGADO')return 'PAGADO';
+  if(p.estado==='VENCIDO')return 'VENCIDO';
+  const hoy=hoyStr();
+  if(p.fechaVenc&&p.fechaVenc<hoy)return 'VENCIDO';
+  return 'PENDIENTE';
+}
+function calcular(){
+  const{aportes,prestamos,pagos,socios}=STATE;
+  const totalCap=aportes.reduce((s,a)=>s+(+a.monto),0);
+  const prestAct=prestamos.filter(p=>estadoEfectivo(p)==='PENDIENTE').reduce((s,p)=>s+(+p.monto),0);
+  const cajaCap=totalCap-prestAct;
+  const intCob=prestamos.filter(p=>estadoEfectivo(p)==='PAGADO').reduce((s,p)=>s+getInt(p),0);
+  const reserva=intCob*.10;
+  const dist=intCob-reserva;
+  const socData=socios.map(soc=>{
+    const tot=aportes.filter(a=>a.socio===soc).reduce((s,a)=>s+(+a.monto),0);
+    const pp=totalCap>0?tot/totalCap:0;
+    const gan=dist*pp;
+    const rec=pagos.filter(p=>p.socio===soc).reduce((s,p)=>s+(+p.monto),0);
+    return{socio:soc,totalAp:tot,pct:pp,ganado:gan,recibido:rec,pendiente:gan-rec};
+  });
+  return{totalCap,prestAct,cajaCap,intCob,reserva,dist,
+    pagados:prestamos.filter(p=>estadoEfectivo(p)==='PAGADO').length,
+    pendientes:prestamos.filter(p=>estadoEfectivo(p)==='PENDIENTE').length,
+    vencidos:prestamos.filter(p=>estadoEfectivo(p)==='VENCIDO').length,
+    socios:socData};
+}
+function badge(est,p){const ef=p?estadoEfectivo(p):est;const m={PAGADO:'p',PENDIENTE:'pen',VENCIDO:'v'};return`<span class="badge badge-${m[ef]||'pen'}">${ef}</span>`;}
+const esEditor=()=>currentRole==='admin'||currentRole==='editor';
+
+// ══════════════════════════════════════════════════════════════════
+//  PANTALLA DE LOGIN / CONFIGURACIÓN
+// ══════════════════════════════════════════════════════════════════
+function renderLogin(){
+  const sinConfig=!CONFIG_LISTO;
+  return`<div class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">🏦</div>
+      <h1 class="login-title">${STATE.nombre}</h1>
+      <p class="login-sub">Sistema contable cooperativo<br>Accede con tu cuenta de Google para ver y editar los datos compartidos.</p>
+      ${sinConfig?`<div class="info-box info-red" style="text-align:left;margin-bottom:16px">
+        <strong>⚠️ Configuración pendiente</strong><br>
+        El archivo aún no tiene las credenciales de Google. Haz clic en el botón de abajo para ver las instrucciones.
+      </div>`:''}
+      <button class="google-btn" onclick="iniciarLogin()">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-3.59-13.46-8.83l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+        Entrar con Google
+      </button>
+      ${sinConfig?`<p style="font-size:11px;color:var(--text3);margin-top:12px;cursor:pointer;text-decoration:underline" onclick="abrirModal('setup')">📋 Ver guía de configuración</p>`:''}
+      <div class="login-divider"></div>
+      <p style="font-size:11px;color:var(--text3);line-height:1.6">🔒 Los datos se guardan en <strong>Google Drive</strong>.<br>Solo personas autorizadas pueden editar.</p>
+    </div>
+  </div>`;
+}
+
+function renderCargando(){
+  return`<div class="login-screen">
+    <div style="text-align:center;color:white">
+      <div style="font-size:40px;margin-bottom:16px;animation:pulse .8s infinite">⏳</div>
+      <p style="font-size:16px;font-weight:500">Conectando con Google Drive...</p>
+      <p style="font-size:12px;color:rgba(255,255,255,.5);margin-top:8px">Cargando tus datos</p>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  RENDER HEADER
+// ══════════════════════════════════════════════════════════════════
+function renderHeader(st){
+  const rolLabel={admin:'Administrador',editor:'Editor',lector:'Lector'}[currentRole]||'Lector';
+  const rolCls={admin:'badge-editor',editor:'badge-a',lector:'badge-lector'}[currentRole]||'badge-lector';
+  return`<div style="background:var(--navy3);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+    <div>
+      <p style="color:white;font-size:15px;font-weight:600;margin:0">${STATE.nombre}</p>
+      <p style="color:rgba(255,255,255,.4);font-size:11px;margin:0">${new Date().toLocaleDateString('es-PE')}</p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      ${esEditor()?`<button id="btn-export" class="btn btn-gold" style="font-size:11.5px;padding:7px 14px">📊 Excel</button>`:''}
+      ${currentRole==='admin'?`<button id="btn-permisos" class="btn btn-outline" style="font-size:11.5px;padding:7px 14px;color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.2)">👥 Permisos</button>`:''}
+      <button id="btn-config" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:7px 14px;color:rgba(255,255,255,.85);font-size:11.5px;cursor:pointer">⚙️</button>
+      ${esEditor()?`<button id="btn-ai" style="background:var(--gold);border:none;border-radius:8px;padding:7px 14px;color:white;font-size:11.5px;font-weight:600;cursor:pointer">${STATE.aiLoading?'⏳':'🤖 IA'}</button>`:''}
+      <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:8px;padding:6px 12px">
+        ${currentUser?.picture?`<img src="${currentUser.picture}" style="width:24px;height:24px;border-radius:50%">`:'<div style="width:24px;height:24px;border-radius:50%;background:var(--navy2);display:flex;align-items:center;justify-content:center;color:white;font-size:11px">👤</div>'}
+        <div>
+          <p style="color:white;font-size:11px;font-weight:500;margin:0">${currentUser?.name?.split(' ')[0]||currentUser?.email||'Usuario'}</p>
+          <span class="badge ${rolCls}" style="font-size:9px">${rolLabel}</span>
+        </div>
+        <button onclick="cerrarSesion()" style="background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:18px;padding:0 2px" title="Cerrar sesión">⏏</button>
+      </div>
+    </div>
+  </div>
+  <div class="sync-bar">
+    <div class="sync-dot ${syncStatus}"></div>
+    <span class="sync-txt" style="color:rgba(255,255,255,.5)">Guardado en Google Drive</span>
+    <span style="margin-left:auto;color:rgba(255,255,255,.3);font-size:10px">Archivo: ${CONFIG.DATA_FILE}</span>
+  </div>
+  <div style="background:var(--navy2);display:flex;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,.08)">
+    ${[['dashboard','📊 Dashboard',''],['prestamos','💰 Préstamos',st.pendientes>0?`<span style="background:#BF360C;color:white;border-radius:10px;font-size:9px;padding:1px 6px;font-weight:700;margin-left:4px">${st.pendientes}</span>`:''],
+      ['aportes','👥 Aportes',''],['distribucion','📈 Distribución',''],['pagos','💳 Pagos',''],['calendario','📅 Calendario','']].map(([id,lbl,extra])=>
+      `<button class="nav-btn" data-view="${id}" style="padding:11px 18px;border:none;background:transparent;border-bottom:3px solid ${STATE.view===id?'var(--goldb)':'transparent'};color:${STATE.view===id?'white':'rgba(255,255,255,.5)'};cursor:pointer;font-size:12.5px;font-weight:${STATE.view===id?'600':'400'};white-space:nowrap">${lbl}${extra}</button>`
+    ).join('')}
+  </div>
+  ${!esEditor()?`<div class="readonly-notice">🔒 Modo <strong>Solo lectura</strong> — Tu cuenta tiene acceso de lector. Contacta al administrador para solicitar permisos de edición.</div>`:''}
+  ${STATE.aiText?`<div style="background:var(--navy2);padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.1)">
+    <div style="display:flex;gap:10px;align-items:flex-start">
+      <span style="font-size:18px;flex-shrink:0">🤖</span>
+      <div style="flex:1"><p style="font-size:10px;font-weight:600;color:var(--goldb);margin:0 0 5px;text-transform:uppercase;letter-spacing:.08em">Análisis del Contador IA</p>
+      <p style="font-size:12px;color:rgba(255,255,255,.85);margin:0;line-height:1.6;white-space:pre-wrap">${STATE.aiText}</p></div>
+      <button id="close-ai" style="background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:18px;line-height:1">✕</button>
+    </div></div>`:''}`;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  VISTAS (Dashboard, Préstamos, Aportes, Distribución, Pagos, Calendario)
+// ══════════════════════════════════════════════════════════════════
+function renderDashboard(st){
+  const ps=st.socios;
+  return`<div style="padding:20px">
+    <p class="sec-title">Panel de Control</p><p class="sec-sub">Estado financiero en tiempo real</p>
+    <div class="g4" style="margin-bottom:16px">
+      ${[['Capital Total',sol(st.totalCap),'Suma de aportes','border-top:3px solid var(--navy)'],
+         ['Capital en Caja',sol(st.cajaCap),'Disponible para prestar','border-top:3px solid var(--teal)'],
+         ['Intereses Cobrados',sol(st.intCob),'Préstamos PAGADOS','border-top:3px solid var(--green)'],
+         ['Utilidades Distribuibles',sol(st.dist),'Reserva: '+sol(st.reserva),'border-top:3px solid var(--gold)']
+        ].map(([t,v,s,bs])=>`<div class="kpi" style="${bs}">
+        <p style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">${t}</p>
+        <p style="font-size:20px;font-weight:600;font-family:var(--mono);color:var(--text);margin-bottom:4px">${v}</p>
+        <p style="font-size:11px;color:var(--text3)">${s}</p>
+      </div>`).join('')}
+    </div>
+    <div class="g3" style="margin-bottom:16px">
+      ${[[st.pagados,'COBRADOS','#E8F5E9','#1E6B3A','#A5D6A7'],
+         [st.pendientes,'PENDIENTES','#FFF8E1','#BF360C','#FFD54F'],
+         [st.vencidos,'VENCIDOS','#FFEBEE','#7F0000','#EF9A9A']].map(([v,l,bg,c,bd])=>
+        `<div style="background:${bg};border:1.5px solid ${bd};border-radius:12px;padding:16px;text-align:center">
+          <p style="font-size:32px;font-weight:600;font-family:var(--mono);color:${c};margin-bottom:4px">${v}</p>
+          <p style="font-size:10px;font-weight:700;color:${c};text-transform:uppercase;letter-spacing:.08em">${l}</p>
+        </div>`).join('')}
+    </div>
+    <div class="card"><div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Socio</th><th class="r">Aportó</th><th class="r">% Capital</th><th class="r">Le Corresponde</th><th class="r">Ya Recibió</th><th class="r">Saldo Pendiente</th></tr></thead>
+        <tbody>${ps.map((s,i)=>`<tr class="${i%2===0?'row-even':'row-alt'}">
+          <td class="b" style="color:var(--navy)">${s.socio}</td>
+          <td class="r mono">${sol(s.totalAp)}</td>
+          <td class="r"><div class="pct-bar-wrap"><div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${(s.pct*100).toFixed(0)}%"></div></div><span style="font-size:11px;min-width:36px;text-align:right;font-family:var(--mono)">${pctF(s.pct)}</span></div></td>
+          <td class="r b mono" style="color:var(--green)">${sol(s.ganado)}</td>
+          <td class="r mono" style="color:var(--teal)">${sol(s.recibido)}</td>
+          <td class="r b mono" style="color:${s.pendiente>0?'var(--gold)':'var(--green)'}">${sol(s.pendiente)}</td>
+        </tr>`).join('')}</tbody>
+        <tfoot><tr class="tfoot-row"><td>TOTAL</td><td class="r mono">${sol(ps.reduce((s,x)=>s+x.totalAp,0))}</td><td class="r">100.0%</td><td class="r mono">${sol(st.dist)}</td><td class="r mono">${sol(ps.reduce((s,x)=>s+x.recibido,0))}</td><td class="r mono" style="color:#D4AF37">${sol(ps.reduce((s,x)=>s+x.pendiente,0))}</td></tr></tfoot>
+      </table>
+    </div></div>
+  </div>`;
+}
+
+function renderPrestamos(){
+  const prs=STATE.prestamos.slice().sort((a,b)=>a.fechaVenc<b.fechaVenc?-1:1);
+  const totPend=STATE.prestamos.filter(p=>estadoEfectivo(p)==='PENDIENTE').reduce((s,p)=>s+(+p.monto)+getInt(p),0);
+  const hoy=hoyStr();
+  return`<div style="padding:20px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div><p class="sec-title">Préstamos</p><p class="sec-sub">${STATE.prestamos.length} registros · ${sol(totPend)} por cobrar</p></div>
+      ${esEditor()?`<button class="btn btn-navy" id="btn-np">＋ Nuevo préstamo</button>`:''}
+    </div>
+    <div class="card"><div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>#</th><th>Cliente</th><th>Fecha</th><th class="r">Monto</th><th class="r">Interés %</th><th class="r">Total a Cobrar</th><th>Vencimiento</th><th>Estado</th>${esEditor()?'<th class="c">Acciones</th>':''}</tr></thead>
+        <tbody>${prs.length===0?`<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3)">Sin préstamos registrados</td></tr>`:
+          prs.map((p,i)=>{
+            const ef=estadoEfectivo(p);
+            const isHoy=ef==='PENDIENTE'&&p.fechaVenc===hoy;
+            const rowStyle=isHoy?'background:#FFF8E1':(ef==='VENCIDO'?'background:#FFF5F5':'');
+            return`<tr class="${i%2===0?'row-even':'row-alt'}" style="${rowStyle}">
+            <td class="g mono">${i+1}</td>
+            <td class="b" style="color:var(--navy)">${p.cliente}</td>
+            <td class="g">${p.fecha}</td>
+            <td class="r mono">${sol(p.monto)}</td>
+            <td class="r g">${p.interesPct}%</td>
+            <td class="r b mono">${sol(+p.monto+getInt(p))}</td>
+            <td class="g" style="color:${ef==='VENCIDO'?'var(--red)':isHoy?'var(--amb)':'var(--text3)'};font-weight:${isHoy||ef==='VENCIDO'?'600':'400'}">${p.fechaVenc}${isHoy?' ⚠️':''}</td>
+            <td>${badge(ef)}</td>
+            ${esEditor()?`<td class="c"><div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap">
+              <button class="edit-btn" data-edit-pr="${p.id}">✏️</button>
+              ${ef==='PENDIENTE'?`<button class="btn btn-green btn-sm" data-pagar="${p.id}">✓</button><button class="btn btn-red btn-sm" data-vencer="${p.id}">Vencido</button>`:''}
+              <button class="del-btn" data-del-pr="${p.id}">🗑</button>
+            </div></td>`:''}
+          </tr>`;}).join('')}
+        </tbody>
+      </table>
+    </div></div>
+  </div>`;
+}
+
+function renderAportes(){
+  const aps=STATE.aportes.slice().sort((a,b)=>a.fecha<b.fecha?-1:1);
+  const totCap=aps.reduce((s,a)=>s+(+a.monto),0);
+  const porSocio=STATE.socios.map(s=>({s,tot:aps.filter(a=>a.socio===s).reduce((sum,a)=>sum+(+a.monto),0)}));
+  return`<div style="padding:20px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div><p class="sec-title">Aportes de Capital</p><p class="sec-sub">Capital total: ${sol(totCap)}</p></div>
+      ${esEditor()?`<button class="btn btn-navy" id="btn-na">＋ Nuevo aporte</button>`:''}
+    </div>
+    <div class="g5" style="margin-bottom:16px">
+      ${porSocio.map(({s,tot})=>`<div class="aporte-card">
+        <p class="aporte-card-name">${s}</p>
+        <p class="aporte-card-val">${sol(tot)}</p>
+        <p class="aporte-card-pct">${totCap>0?((tot/totCap)*100).toFixed(1):'0.0'}%</p>
+      </div>`).join('')}
+    </div>
+    <div class="card"><div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>#</th><th>Fecha</th><th>Socio</th><th class="r">Monto</th><th>Tipo</th><th>Concepto</th>${esEditor()?'<th class="c">Acciones</th>':''}</tr></thead>
+        <tbody>${aps.map((a,i)=>`<tr class="${i%2===0?'row-even':'row-alt'}">
+          <td class="g mono">${i+1}</td><td class="g">${a.fecha}</td>
+          <td class="b" style="color:var(--navy)">${a.socio}</td>
+          <td class="r b mono">${sol(a.monto)}</td>
+          <td><span class="badge badge-a">${a.tipo}</span></td>
+          <td class="g">${a.concepto}</td>
+          ${esEditor()?`<td class="c"><div style="display:flex;gap:4px;justify-content:center">
+            <button class="edit-btn" data-edit-ap="${a.id}">✏️</button>
+            <button class="del-btn" data-del-ap="${a.id}">🗑</button>
+          </div></td>`:''}
+        </tr>`).join('')}</tbody>
+      </table>
+    </div></div>
+  </div>`;
+}
+
+function renderDistribucion(st){
+  const ps=st.socios;
+  return`<div style="padding:20px">
+    <p class="sec-title">Distribución de Utilidades</p><p class="sec-sub">Calculado según cobros y aportes</p>
+    <div class="card card-pad" style="margin-bottom:16px">
+      <p style="font-size:11.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px">Cálculo</p>
+      ${[['Total intereses cobrados (PAGADOS)',st.intCob,'var(--green)'],['(−) Reserva 10%',-st.reserva,'var(--amb)']].map(([l,v,c])=>
+        `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border2)">
+          <span style="font-size:13px;color:var(--text2)">${l}</span>
+          <span style="font-size:13px;font-weight:600;font-family:var(--mono);color:${c}">${sol(Math.abs(v))}</span>
+        </div>`).join('')}
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding:12px 16px;background:var(--goldl);border:2px solid var(--gold);border-radius:10px">
+        <span style="font-size:14px;font-weight:600;color:var(--navy)">Utilidades distribuibles</span>
+        <span style="font-size:22px;font-weight:600;font-family:var(--mono);color:var(--gold)">${sol(st.dist)}</span>
+      </div>
+    </div>
+    <div class="card"><div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Socio</th><th class="r">Aportó</th><th class="r">% Part.</th><th class="r">Le Corresponde</th><th class="r">Ya Recibió</th><th class="r">Saldo Pendiente</th></tr></thead>
+        <tbody>${ps.map((s,i)=>`<tr class="${i%2===0?'row-even':'row-alt'}">
+          <td class="b" style="color:var(--navy)">${s.socio}</td>
+          <td class="r mono">${sol(s.totalAp)}</td>
+          <td class="r"><div class="pct-bar-wrap"><div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${(s.pct*100).toFixed(0)}%"></div></div><span style="font-size:11px;font-family:var(--mono)">${pctF(s.pct)}</span></div></td>
+          <td class="r b mono" style="color:var(--green)">${sol(s.ganado)}</td>
+          <td class="r mono" style="color:var(--teal)">${sol(s.recibido)}</td>
+          <td class="r b mono" style="color:${s.pendiente>0?'var(--gold)':'var(--green)'}">${sol(s.pendiente)}</td>
+        </tr>`).join('')}</tbody>
+        <tfoot><tr class="tfoot-row"><td>TOTAL</td><td class="r mono">${sol(ps.reduce((s,x)=>s+x.totalAp,0))}</td><td class="r">100%</td><td class="r mono">${sol(st.dist)}</td><td class="r mono">${sol(ps.reduce((s,x)=>s+x.recibido,0))}</td><td class="r mono" style="color:#D4AF37">${sol(ps.reduce((s,x)=>s+x.pendiente,0))}</td></tr></tfoot>
+      </table>
+    </div></div>
+    <p class="tip-box">💡 Ve a <strong>Pagos</strong> para registrar distribuciones a socios.</p>
+  </div>`;
+}
+
+function renderPagos(st){
+  const pgs=STATE.pagos.slice().sort((a,b)=>a.fecha<b.fecha?-1:1);
+  return`<div style="padding:20px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div><p class="sec-title">Pagos de Utilidades</p><p class="sec-sub">${pgs.length} pagos · Total: ${sol(pgs.reduce((s,p)=>s+(+p.monto),0))}</p></div>
+      ${esEditor()?`<button class="btn btn-navy" id="btn-npago">＋ Registrar pago</button>`:''}
+    </div>
+    ${pgs.length===0?`<div class="card empty-state"><div class="empty-ico">💳</div><p class="empty-ttl">Sin pagos registrados</p></div>`:
+    `<div class="card"><div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>#</th><th>Fecha</th><th>Socio</th><th class="r">Monto</th><th>Concepto</th><th>Notas</th>${esEditor()?'<th class="c">Acciones</th>':''}</tr></thead>
+        <tbody>${pgs.map((p,i)=>`<tr class="${i%2===0?'row-even':'row-alt'}">
+          <td class="g mono">${i+1}</td><td class="g">${p.fecha}</td>
+          <td class="b" style="color:var(--navy)">${p.socio}</td>
+          <td class="r b mono" style="color:var(--green)">${sol(p.monto)}</td>
+          <td style="font-size:11.5px">${p.concepto}</td><td class="g">${p.notas||''}</td>
+          ${esEditor()?`<td class="c"><div style="display:flex;gap:4px;justify-content:center">
+            <button class="edit-btn" data-edit-pg="${p.id}">✏️</button>
+            <button class="del-btn" data-del-pg="${p.id}">🗑</button>
+          </div></td>`:''}
+        </tr>`).join('')}</tbody>
+      </table>
+    </div></div>`}
+  </div>`;
+}
+
+const MESES_ES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+function renderCalendario(){
+  const hoy=hoyStr();const year=STATE.calYear;const month=STATE.calMonth;
+  const pendientes=STATE.prestamos.filter(p=>estadoEfectivo(p)==='PENDIENTE');
+  const vencidos=STATE.prestamos.filter(p=>estadoEfectivo(p)==='VENCIDO');
+  const byDate={};
+  [...pendientes,...vencidos].forEach(p=>{const k=p.fechaVenc;if(!byDate[k])byDate[k]=[];byDate[k].push(p);});
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const daysInPrev=new Date(year,month,0).getDate();
+  let cells=[];
+  for(let i=firstDay-1;i>=0;i--)cells.push({day:daysInPrev-i,month:month-1,year,other:true});
+  for(let d=1;d<=daysInMonth;d++)cells.push({day:d,month,year,other:false});
+  let rem=cells.length%7;if(rem!==0)for(let d=1;d<=7-rem;d++)cells.push({day:d,month:month+1,year,other:true});
+  const calRows=[];for(let r=0;r<cells.length/7;r++)calRows.push(cells.slice(r*7,r*7+7));
+  const calHtml=`<div class="cal-grid">
+    ${['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'].map(d=>`<div class="cal-head-cell">${d}</div>`).join('')}
+    ${calRows.map(row=>row.map(cell=>{
+      const yy=cell.year+(cell.month<0?-1:cell.month>11?1:0);
+      const mm=((cell.month%12)+12)%12;
+      const ds=yy+'-'+String(mm+1).padStart(2,'0')+'-'+String(cell.day).padStart(2,'0');
+      const isToday=ds===hoy;const events=byDate[ds]||[];
+      return`<div class="cal-cell${cell.other?' other-month':''}${isToday?' today':''}${events.length?' has-events':''}">
+        <div class="cal-day-num">${cell.day}</div>
+        ${events.slice(0,3).map(p=>{const ef=estadoEfectivo(p);const cls=ef==='VENCIDO'?'venc-pasado':(ds===hoy?'venc-hoy':'');
+          return`<span class="cal-event ${cls}" title="${p.cliente} — ${sol(+p.monto+getInt(p))}">${p.cliente}</span>`;}).join('')}
+        ${events.length>3?`<span style="font-size:9px;color:var(--text3)">+${events.length-3}</span>`:''}
+      </div>`;}).join('')).join('')}
+  </div>`;
+  const proximos=pendientes.slice().sort((a,b)=>a.fechaVenc<b.fechaVenc?-1:1).slice(0,12);
+  return`<div style="padding:20px">
+    <p class="sec-title">📅 Calendario de Préstamos</p><p class="sec-sub">Vencimientos pendientes</p>
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start">
+      <div><div class="card card-pad">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="cal-nav">
+            <button id="cal-prev">‹</button>
+            <span class="cal-month-title">${MESES_ES[month]} ${year}</span>
+            <button id="cal-next">›</button>
+          </div>
+          <button class="btn btn-outline btn-sm" id="cal-hoy">Hoy</button>
+        </div>
+        ${calHtml}
+        <div class="cal-legend">
+          <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#FFE0B2;border:1px solid var(--amb)"></div>Pendiente</div>
+          <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#FFEBEE;border:1px solid var(--red)"></div>Vencido</div>
+          <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#EEF4FF;border:2px solid var(--navy2)"></div>Hoy</div>
+        </div>
+      </div></div>
+      <div><div class="card card-pad">
+        <p style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Próximos vencimientos</p>
+        ${proximos.length===0?`<p style="font-size:12px;color:var(--text3);text-align:center;padding:20px 0">Sin pendientes 🎉</p>`:`
+        <div class="upcoming-list">${proximos.map(p=>{
+          const d2=new Date(p.fechaVenc);
+          const dias=Math.round((new Date(p.fechaVenc)-new Date(hoy))/(1000*60*60*24));
+          const cls=dias===0?'venc-hoy':(dias<0?'venc-pasado':'');
+          return`<div class="upcoming-item ${cls}">
+            <div class="upcoming-date-box"><div class="upcoming-date-day">${d2.getUTCDate()}</div><div class="upcoming-date-mon">${MESES_ES[d2.getUTCMonth()].slice(0,3)}</div></div>
+            <div style="flex:1;min-width:0">
+              <p style="font-size:12.5px;font-weight:600;color:var(--text)">${p.cliente}</p>
+              <p style="font-size:11px;color:var(--text3)">${sol(+p.monto+getInt(p))} · <span style="color:${dias<=3?'var(--amb)':'var(--text3)'}">${dias===0?'HOY':`${dias}d`}</span></p>
+            </div>
+            ${esEditor()?`<button class="btn btn-green btn-sm" data-pagar="${p.id}" style="flex-shrink:0">✓</button>`:''}
+          </div>`;}).join('')}
+        </div>`}
+        ${vencidos.length>0?`<div style="margin-top:14px"><p style="font-size:11px;font-weight:600;color:var(--red);margin-bottom:8px">⚠️ Vencidos (${vencidos.length})</p>
+          ${vencidos.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#FFF5F5;border-radius:8px;margin-bottom:4px;border:1px solid #EF9A9A">
+            <div><p style="font-size:12px;font-weight:600;color:var(--red)">${p.cliente}</p>
+            <p style="font-size:10.5px;color:#999">${p.fechaVenc} · ${sol(+p.monto+getInt(p))}</p></div>
+            ${esEditor()?`<button class="btn btn-green btn-sm" data-pagar="${p.id}">✓ Cobrado</button>`:''}
+          </div>`).join('')}
+        </div>`:''}
+      </div></div>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  RENDER PRINCIPAL
+// ══════════════════════════════════════════════════════════════════
+function render(){
+  const root=qs('#root');
+  if(STATE.cargando){root.innerHTML=renderCargando();return;}
+  if(!accessToken){root.innerHTML=renderLogin();bindLoginEvents();return;}
+  const st=calcular();
+  let html=renderHeader(st)+'<div id="content">';
+  if(STATE.view==='dashboard')     html+=renderDashboard(st);
+  else if(STATE.view==='prestamos')     html+=renderPrestamos();
+  else if(STATE.view==='aportes')       html+=renderAportes();
+  else if(STATE.view==='distribucion')  html+=renderDistribucion(st);
+  else if(STATE.view==='pagos')         html+=renderPagos(st);
+  else if(STATE.view==='calendario')    html+=renderCalendario();
+  html+='</div>';
+  root.innerHTML=html;
+  bindMainEvents(st);
+}
+
+function bindLoginEvents(){
+  // No hace falta, los botones usan onclick inline
+}
+
+function bindMainEvents(st){
+  qs('#btn-ai')?.addEventListener('click',()=>getAI(st));
+  qs('#close-ai')?.addEventListener('click',()=>{STATE.aiText='';render();});
+  qs('#btn-export')?.addEventListener('click',exportarExcel);
+  qs('#btn-config')?.addEventListener('click',()=>abrirModal('config'));
+  qs('#btn-permisos')?.addEventListener('click',()=>abrirModal('permisos'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>{STATE.view=b.dataset.view;render();}));
+  if(esEditor()){
+    qs('#btn-np')?.addEventListener('click',()=>abrirModal('prestamo'));
+    qs('#btn-na')?.addEventListener('click',()=>abrirModal('aporte'));
+    qs('#btn-npago')?.addEventListener('click',()=>abrirModal('pago',null,st));
+  }
+  qs('#cal-prev')?.addEventListener('click',()=>{STATE.calMonth--;if(STATE.calMonth<0){STATE.calMonth=11;STATE.calYear--;}render();});
+  qs('#cal-next')?.addEventListener('click',()=>{STATE.calMonth++;if(STATE.calMonth>11){STATE.calMonth=0;STATE.calYear++;}render();});
+  qs('#cal-hoy')?.addEventListener('click',()=>{const n=new Date();STATE.calYear=n.getFullYear();STATE.calMonth=n.getMonth();render();});
+  if(esEditor()){
+    document.querySelectorAll('[data-pagar]').forEach(b=>b.addEventListener('click',()=>{
+      STATE.prestamos=STATE.prestamos.map(p=>p.id==b.dataset.pagar?{...p,estado:'PAGADO'}:p);guardar();toast('✅ Marcado como cobrado');render();
+    }));
+    document.querySelectorAll('[data-vencer]').forEach(b=>b.addEventListener('click',()=>{
+      STATE.prestamos=STATE.prestamos.map(p=>p.id==b.dataset.vencer?{...p,estado:'VENCIDO'}:p);guardar();toast('⚠️ Marcado como vencido');render();
+    }));
+    document.querySelectorAll('[data-del-pr]').forEach(b=>b.addEventListener('click',()=>{
+      if(!confirm('¿Eliminar?'))return;STATE.prestamos=STATE.prestamos.filter(p=>p.id!=b.dataset.delPr);guardar();toast('🗑️ Eliminado');render();
+    }));
+    document.querySelectorAll('[data-del-ap]').forEach(b=>b.addEventListener('click',()=>{
+      if(!confirm('¿Eliminar?'))return;STATE.aportes=STATE.aportes.filter(a=>a.id!=b.dataset.delAp);guardar();toast('🗑️ Eliminado');render();
+    }));
+    document.querySelectorAll('[data-del-pg]').forEach(b=>b.addEventListener('click',()=>{
+      if(!confirm('¿Eliminar?'))return;STATE.pagos=STATE.pagos.filter(p=>p.id!=b.dataset.delPg);guardar();toast('🗑️ Eliminado');render();
+    }));
+    document.querySelectorAll('[data-edit-pr]').forEach(b=>b.addEventListener('click',()=>{const p=STATE.prestamos.find(x=>x.id==b.dataset.editPr);if(p)abrirModal('prestamo',p);}));
+    document.querySelectorAll('[data-edit-ap]').forEach(b=>b.addEventListener('click',()=>{const a=STATE.aportes.find(x=>x.id==b.dataset.editAp);if(a)abrirModal('aporte',a);}));
+    document.querySelectorAll('[data-edit-pg]').forEach(b=>b.addEventListener('click',()=>{const p=STATE.pagos.find(x=>x.id==b.dataset.editPg);if(p)abrirModal('pago',p,calcular());}));
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  MODALES
+// ══════════════════════════════════════════════════════════════════
+let modalEl=null;
+function cerrarModal(){if(modalEl){modalEl.remove();modalEl=null;}}
+function abrirModal(tipo,datos=null,st=null){
+  cerrarModal();modalEl=document.createElement('div');modalEl.className='modal-overlay';
+  if(tipo==='prestamo')  modalEl.innerHTML=htmlModalPrestamo(datos);
+  else if(tipo==='aporte')    modalEl.innerHTML=htmlModalAporte(datos);
+  else if(tipo==='pago')      modalEl.innerHTML=htmlModalPago(datos,st||calcular());
+  else if(tipo==='config')    modalEl.innerHTML=htmlModalConfig();
+  else if(tipo==='permisos')  modalEl.innerHTML=htmlModalPermisos();
+  else if(tipo==='setup')     modalEl.innerHTML=htmlModalSetup();
+  document.body.appendChild(modalEl);
+  modalEl.addEventListener('click',e=>{if(e.target===modalEl)cerrarModal();});
+  modalEl.querySelector('.modal-close')?.addEventListener('click',cerrarModal);
+  if(tipo==='prestamo') bindModalPrestamo(datos);
+  else if(tipo==='aporte')   bindModalAporte(datos);
+  else if(tipo==='pago')     bindModalPago(datos,st||calcular());
+  else if(tipo==='config')   bindModalConfig();
+  else if(tipo==='permisos') bindModalPermisos();
+}
+
+function htmlModalPrestamo(d){const e=d||{};
+  return`<div class="modal-box"><div class="modal-head"><span class="modal-title">${d?'✏️ Editar préstamo':'＋ Nuevo préstamo'}</span><button class="modal-close">✕</button></div>
+  <div class="modal-body">
+    <label class="field-lbl">Cliente / Deudor</label><input id="m-cliente" value="${e.cliente||''}" placeholder="Nombre del cliente" style="margin-bottom:10px">
+    <div class="g2 mb10"><div><label class="field-lbl">Fecha del préstamo</label><input type="date" id="m-fecha" value="${e.fecha||''}"></div>
+    <div><label class="field-lbl">Fecha de vencimiento</label><input type="date" id="m-venc" value="${e.fechaVenc||''}"></div></div>
+    <div class="g3 mb10">
+      <div><label class="field-lbl">Monto (S/)</label><input type="number" id="m-monto" value="${e.monto||''}" placeholder="0.00" step="0.01" min="0"></div>
+      <div><label class="field-lbl">Interés %</label><input type="number" id="m-int" value="${e.interesPct??15}" step="0.5" min="0"></div>
+      <div><label class="field-lbl">Plazo (meses)</label><input type="number" id="m-meses" value="${e.meses??1}" min="1"></div>
+    </div>
+    <div style="margin-bottom:14px"><label class="field-lbl">Estado</label>
+      <select id="m-estado">${['PENDIENTE','PAGADO','VENCIDO'].map(s=>`<option${s===(e.estado||'PENDIENTE')?' selected':''}>${s}</option>`).join('')}</select>
+    </div>
+    <div id="m-preview" class="preview-box" style="display:none"></div>
+    <button class="btn btn-navy" id="m-submit" style="width:100%;justify-content:center">${d?'Guardar cambios':'Registrar préstamo'}</button>
+  </div></div>`;
+}
+function bindModalPrestamo(datos){
+  const upd=()=>{const mo=+qs('#m-monto')?.value||0;const ip=+qs('#m-int')?.value||0;const ms=+qs('#m-meses')?.value||1;const i=mo*(ip/100)*ms;const p=qs('#m-preview');if(mo>0&&p){p.style.display='block';p.innerHTML=`💡 Interés: <strong>${sol(i)}</strong> · Total: <strong>${sol(mo+i)}</strong>`;}};
+  ['m-monto','m-int','m-meses'].forEach(id=>qs('#'+id)?.addEventListener('input',upd));upd();
+  qs('#m-submit')?.addEventListener('click',()=>{
+    const cliente=qs('#m-cliente')?.value?.trim();const fecha=qs('#m-fecha')?.value;
+    const monto=+qs('#m-monto')?.value;const interesPct=+qs('#m-int')?.value;
+    const meses=+qs('#m-meses')?.value||1;const fechaVenc=qs('#m-venc')?.value;const estado=qs('#m-estado')?.value;
+    if(!cliente){alert('Ingresa el nombre del cliente');return;}
+    if(!fecha){alert('Ingresa la fecha del préstamo');return;}
+    if(!monto||monto<=0){alert('Ingresa un monto válido');return;}
+    if(datos){STATE.prestamos=STATE.prestamos.map(p=>p.id===datos.id?{...p,cliente,fecha,monto,interesPct,meses,fechaVenc,estado}:p);toast('✅ Préstamo actualizado');}
+    else{STATE.prestamos=[...STATE.prestamos,{id:Date.now(),cliente,fecha,monto,interesPct,meses,fechaVenc,estado}];toast('✅ Préstamo registrado');}
+    guardar();cerrarModal();render();
+  });
+}
+
+function htmlModalAporte(d){const e=d||{};
+  return`<div class="modal-box"><div class="modal-head"><span class="modal-title">${d?'✏️ Editar aporte':'＋ Nuevo aporte'}</span><button class="modal-close">✕</button></div>
+  <div class="modal-body">
+    <label class="field-lbl">Fecha</label><input type="date" id="m-fecha" value="${e.fecha||''}" style="margin-bottom:10px">
+    <div class="g2 mb10">
+      <div><label class="field-lbl">Socio</label><select id="m-socio">${STATE.socios.map(s=>`<option${s===(e.socio||STATE.socios[0])?' selected':''}>${s}</option>`).join('')}</select></div>
+      <div><label class="field-lbl">Monto (S/)</label><input type="number" id="m-monto" value="${e.monto||''}" placeholder="0.00" step="0.01" min="0"></div>
+    </div>
+    <label class="field-lbl">Tipo</label><select id="m-tipo" style="margin-bottom:10px">${['Aporte inicial','Aporte adicional','Reinversión de utilidades','Otro'].map(t=>`<option${t===(e.tipo||'Aporte adicional')?' selected':''}>${t}</option>`).join('')}</select>
+    <label class="field-lbl">Concepto</label><input id="m-conc" value="${e.concepto||''}" placeholder="Descripción..." style="margin-bottom:14px">
+    <button class="btn btn-navy" id="m-submit" style="width:100%;justify-content:center">${d?'Guardar cambios':'Registrar aporte'}</button>
+  </div></div>`;
+}
+function bindModalAporte(datos){
+  qs('#m-submit')?.addEventListener('click',()=>{
+    const fecha=qs('#m-fecha')?.value;const socio=qs('#m-socio')?.value;
+    const monto=+qs('#m-monto')?.value;const tipo=qs('#m-tipo')?.value;const concepto=qs('#m-conc')?.value;
+    if(!fecha){alert('Ingresa la fecha');return;}if(!monto||monto<=0){alert('Ingresa un monto válido');return;}
+    if(datos){STATE.aportes=STATE.aportes.map(a=>a.id===datos.id?{...a,fecha,socio,monto,tipo,concepto}:a);toast('✅ Aporte actualizado');}
+    else{STATE.aportes=[...STATE.aportes,{id:Date.now(),fecha,socio,monto,tipo,concepto}];toast('✅ Aporte registrado');}
+    guardar();cerrarModal();render();
+  });
+}
+
+function htmlModalPago(d,st){const e=d||{};const socioSel=e.socio||STATE.socios[0];const si=st.socios.find(s=>s.socio===socioSel);
+  return`<div class="modal-box"><div class="modal-head"><span class="modal-title">${d?'✏️ Editar pago':'＋ Registrar pago'}</span><button class="modal-close">✕</button></div>
+  <div class="modal-body">
+    <label class="field-lbl">Fecha</label><input type="date" id="m-fecha" value="${e.fecha||''}" style="margin-bottom:10px">
+    <div class="g2 mb10">
+      <div><label class="field-lbl">Socio</label><select id="m-socio">${STATE.socios.map(s=>`<option${s===socioSel?' selected':''}>${s}</option>`).join('')}</select></div>
+      <div><label class="field-lbl">Monto (S/)</label><input type="number" id="m-monto" value="${e.monto||''}" placeholder="0.00" step="0.01" min="0"></div>
+    </div>
+    ${si?`<div class="info-box info-blue"><strong>${si.socio}</strong> · Le corresponde: ${sol(si.ganado)} · Pendiente: <strong>${sol(si.pendiente)}</strong></div>`:''}
+    <label class="field-lbl">Concepto</label><select id="m-conc" style="margin-bottom:10px">${['Distribución de utilidades','Pago parcial','Anticipo','Otro'].map(t=>`<option${t===(e.concepto||'Distribución de utilidades')?' selected':''}>${t}</option>`).join('')}</select>
+    <label class="field-lbl">Notas (opcional)</label><input id="m-notas" value="${e.notas||''}" placeholder="Observaciones..." style="margin-bottom:14px">
+    <button class="btn btn-navy" id="m-submit" style="width:100%;justify-content:center">${d?'Guardar cambios':'Registrar pago'}</button>
+  </div></div>`;
+}
+function bindModalPago(datos){
+  qs('#m-socio')?.addEventListener('change',e=>{const si=calcular().socios.find(s=>s.socio===e.target.value);const ib=modalEl?.querySelector('.info-box');if(si&&ib)ib.innerHTML=`<strong>${si.socio}</strong> · Le corresponde: ${sol(si.ganado)} · Pendiente: <strong>${sol(si.pendiente)}</strong>`;});
+  qs('#m-submit')?.addEventListener('click',()=>{
+    const fecha=qs('#m-fecha')?.value;const socio=qs('#m-socio')?.value;
+    const monto=+qs('#m-monto')?.value;const concepto=qs('#m-conc')?.value;const notas=qs('#m-notas')?.value;
+    if(!fecha){alert('Ingresa la fecha');return;}if(!monto||monto<=0){alert('Ingresa un monto válido');return;}
+    if(datos){STATE.pagos=STATE.pagos.map(p=>p.id===datos.id?{...p,fecha,socio,monto,concepto,notas}:p);toast('✅ Pago actualizado');}
+    else{STATE.pagos=[...STATE.pagos,{id:Date.now(),fecha,socio,monto,concepto,notas}];toast('✅ Pago registrado');}
+    guardar();cerrarModal();render();
+  });
+}
+
+function htmlModalConfig(){
+  return`<div class="modal-box wide"><div class="modal-head"><span class="modal-title">⚙️ Configuración</span><button class="modal-close">✕</button></div>
+  <div class="modal-body">
+    <label class="field-lbl">Nombre de la Cooperativa</label>
+    <input id="m-nombre" value="${STATE.nombre}" placeholder="Nombre..." style="margin-bottom:14px">
+    ${esEditor()?`<div class="divider"></div>
+    <p style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">👥 Socios</p>
+    <div id="socios-lista" style="display:flex;flex-wrap:wrap;margin-bottom:12px">${STATE.socios.map(s=>`<span class="socio-tag">${s}<button data-del-socio="${s}">×</button></span>`).join('')}</div>
+    <div class="g2 mb14"><input id="m-nuevo-socio" placeholder="Nuevo socio..."><button class="btn btn-navy" id="m-add-socio">＋ Agregar</button></div>
+    <div class="divider"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-amber" id="m-reset">↩ Restaurar datos originales</button>
+      <button class="btn btn-danger" id="m-limpiar">🗑️ Borrar todo</button>
+    </div>`:
+    `<div class="info-box info-blue" style="margin-top:12px">Solo el administrador puede gestionar socios y datos.</div>`}
+  </div></div>`;
+}
+function bindModalConfig(){
+  qs('#m-nombre')?.addEventListener('input',e=>{STATE.nombre=e.target.value;guardar();});
+  if(!esEditor())return;
+  qs('#m-add-socio')?.addEventListener('click',()=>{
+    const val=qs('#m-nuevo-socio')?.value?.trim().toUpperCase();
+    if(!val){alert('Escribe el nombre');return;}if(STATE.socios.includes(val)){toast('⚠️ Ya existe');return;}
+    STATE.socios=[...STATE.socios,val];guardar();
+    const l=modalEl?.querySelector('#socios-lista');if(l)l.innerHTML=STATE.socios.map(s=>`<span class="socio-tag">${s}<button data-del-socio="${s}">×</button></span>`).join('');
+    qs('#m-nuevo-socio').value='';bindDeleteSocios();toast('✅ Socio agregado');
+  });
+  bindDeleteSocios();
+  qs('#m-reset')?.addEventListener('click',()=>{if(!confirm('¿Restaurar datos originales?'))return;STATE.socios=[...DEFAULT_SOCIOS];STATE.aportes=DEFAULT_AP.map(a=>({...a}));STATE.prestamos=DEFAULT_PR.map(p=>({...p}));STATE.pagos=[];STATE.nombre='Cooperativa';guardar();cerrarModal();render();toast('✅ Datos restaurados');});
+  qs('#m-limpiar')?.addEventListener('click',()=>{if(!confirm('⚠️ ¿Borrar TODO?'))return;STATE.aportes=[];STATE.prestamos=[];STATE.pagos=[];STATE.nombre='Cooperativa';STATE.socios=[...DEFAULT_SOCIOS];guardar();cerrarModal();render();toast('🗑️ Sistema limpio');});
+}
+function bindDeleteSocios(){
+  modalEl?.querySelectorAll('[data-del-socio]').forEach(b=>b.addEventListener('click',()=>{
+    const s=b.dataset.delSocio;if(STATE.aportes.some(a=>a.socio===s)){toast('⚠️ Tiene aportes registrados');return;}
+    if(!confirm(`¿Eliminar ${s}?`))return;STATE.socios=STATE.socios.filter(x=>x!==s);guardar();
+    const l=modalEl?.querySelector('#socios-lista');if(l)l.innerHTML=STATE.socios.map(s=>`<span class="socio-tag">${s}<button data-del-socio="${s}">×</button></span>`).join('');
+    bindDeleteSocios();toast('🗑️ Socio eliminado');
+  }));
+}
+
+// ── Modal Permisos ──────────────────────────────────────────────
+function htmlModalPermisos(){
+  return`<div class="modal-box wide"><div class="modal-head"><span class="modal-title">👥 Gestión de Permisos</span><button class="modal-close">✕</button></div>
+  <div class="modal-body">
+    <div class="info-box info-blue" style="margin-bottom:14px">
+      <strong>¿Cómo funciona?</strong><br>
+      • <strong>Administrador</strong>: acceso total, puede gestionar permisos<br>
+      • <strong>Editor</strong>: puede ver y editar datos, no gestiona permisos<br>
+      • <strong>Lector</strong>: solo puede ver, no puede editar nada
+    </div>
+    <div id="permisos-lista" style="margin-bottom:16px">${renderFilasPermisos()}</div>
+    <div class="divider"></div>
+    <p style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">➕ Agregar persona</p>
+    <div class="g2 mb10">
+      <div><label class="field-lbl">Correo Gmail</label><input id="m-perm-email" placeholder="ejemplo@gmail.com"></div>
+      <div><label class="field-lbl">Nombre</label><input id="m-perm-nombre" placeholder="Nombre completo"></div>
+    </div>
+    <div class="g2 mb14">
+      <div><label class="field-lbl">Rol</label>
+        <select id="m-perm-rol"><option value="lector">🔒 Lector (solo ver)</option><option value="editor">✏️ Editor (ver y editar)</option><option value="admin">👑 Administrador</option></select>
+      </div>
+      <div style="display:flex;align-items:flex-end"><button class="btn btn-navy" id="m-perm-add" style="width:100%;justify-content:center">➕ Agregar</button></div>
+    </div>
+    <div class="info-box info-gold">
+      💡 <strong>Para compartir el archivo:</strong> Sube este HTML a Google Drive y compártelo con las personas usando "Compartir" de Drive. Luego agrégalas aquí para que puedan editar.
+    </div>
+  </div></div>`;
+}
+function renderFilasPermisos(){
+  if(permisos.length===0)return`<p style="font-size:12px;color:var(--text3)">Sin permisos configurados</p>`;
+  return permisos.map(p=>{
+    const isSelf=p.email===currentUser?.email;
+    const rolCls={admin:'badge-editor',editor:'badge-a',lector:'badge-lector'}[p.rol]||'badge-lector';
+    return`<div class="user-row">
+      <div class="user-avatar">${(p.nombre||p.email).charAt(0).toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <p style="font-size:13px;font-weight:600;color:var(--text)">${p.nombre||p.email}</p>
+        <p style="font-size:11px;color:var(--text3)">${p.email}</p>
+      </div>
+      <select class="perm-rol-sel" data-perm-email="${p.email}" style="width:140px;font-size:11.5px" ${isSelf?'disabled':''}>
+        ${['lector','editor','admin'].map(r=>`<option value="${r}"${r===p.rol?' selected':''}>${{lector:'🔒 Lector',editor:'✏️ Editor',admin:'👑 Admin'}[r]}</option>`).join('')}
+      </select>
+      ${!isSelf?`<button class="del-btn" data-perm-del="${p.email}" style="margin-left:6px">🗑</button>`:'<span style="font-size:10px;color:var(--text3);margin-left:8px">(tú)</span>'}
+    </div>`;
+  }).join('');
+}
+function bindModalPermisos(){
+  const refrescarLista=()=>{const l=modalEl?.querySelector('#permisos-lista');if(l)l.innerHTML=renderFilasPermisos();bindPermEvents();};
+  qs('#m-perm-add')?.addEventListener('click',async()=>{
+    const email=qs('#m-perm-email')?.value?.trim().toLowerCase();
+    const nombre=qs('#m-perm-nombre')?.value?.trim();
+    const rol=qs('#m-perm-rol')?.value;
+    if(!email||!email.includes('@')){alert('Ingresa un correo válido');return;}
+    if(permisos.find(p=>p.email===email)){toast('⚠️ Ese correo ya tiene acceso');return;}
+    permisos=[...permisos,{email,nombre:nombre||email,rol}];
+    await guardarPermisos();refrescarLista();toast('✅ Permiso agregado para '+email);
+    qs('#m-perm-email').value='';qs('#m-perm-nombre').value='';
+  });
+  bindPermEvents();
+}
+function bindPermEvents(){
+  modalEl?.querySelectorAll('.perm-rol-sel').forEach(sel=>sel.addEventListener('change',async e=>{
+    const email=e.target.dataset.permEmail;const rol=e.target.value;
+    permisos=permisos.map(p=>p.email===email?{...p,rol}:p);
+    await guardarPermisos();toast('✅ Rol actualizado');
+  }));
+  modalEl?.querySelectorAll('[data-perm-del]').forEach(b=>b.addEventListener('click',async()=>{
+    const email=b.dataset.permDel;if(!confirm(`¿Quitar acceso a ${email}?`))return;
+    permisos=permisos.filter(p=>p.email!==email);await guardarPermisos();
+    const l=modalEl?.querySelector('#permisos-lista');if(l)l.innerHTML=renderFilasPermisos();bindPermEvents();toast('🗑️ Acceso revocado');
+  }));
+}
+
+// ── Modal Setup / Guía de configuración ───────────────────────────
+function htmlModalSetup(){
+  return`<div class="modal-box wide"><div class="modal-head"><span class="modal-title">📋 Guía de configuración Google</span><button class="modal-close">✕</button></div>
+  <div class="modal-body">
+    <div class="info-box info-gold">Esta configuración se hace <strong>una sola vez</strong>. Tarda aproximadamente 5 minutos y es completamente gratuita.</div>
+    <div class="divider"></div>
+
+    <div class="setup-step">
+      <p style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px"><span class="setup-step-num">1</span> Ir a Google Cloud Console</p>
+      <p style="font-size:12px;color:var(--text2)">Abre <strong>console.cloud.google.com</strong> e inicia sesión con tu cuenta de Google. Crea un proyecto nuevo (puedes llamarlo "Cooperativa").</p>
+    </div>
+
+    <div class="setup-step">
+      <p style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px"><span class="setup-step-num">2</span> Habilitar Google Drive API</p>
+      <p style="font-size:12px;color:var(--text2)">Ve a <strong>APIs y Servicios → Biblioteca</strong>. Busca "Google Drive API" y haz clic en <strong>Habilitar</strong>.</p>
+    </div>
+
+    <div class="setup-step">
+      <p style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px"><span class="setup-step-num">3</span> Crear API Key</p>
+      <p style="font-size:12px;color:var(--text2)">Ve a <strong>APIs y Servicios → Credenciales → Crear credencial → Clave de API</strong>. Copia la clave generada.</p>
+    </div>
+
+    <div class="setup-step">
+      <p style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px"><span class="setup-step-num">4</span> Crear Client ID OAuth 2.0</p>
+      <p style="font-size:12px;color:var(--text2)">En <strong>Credenciales → Crear credencial → ID de cliente de OAuth</strong>. Tipo: <strong>Aplicación web</strong>. En "Orígenes JS autorizados" agrega:</p>
+      <div class="step-code">https://drive.google.com<br>null</div>
+      <p style="font-size:12px;color:var(--text2);margin-top:6px">Copia el "ID de cliente" que termina en <code>.apps.googleusercontent.com</code></p>
+    </div>
+
+    <div class="setup-step">
+      <p style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px"><span class="setup-step-num">5</span> Pegar las credenciales en el archivo HTML</p>
+      <p style="font-size:12px;color:var(--text2)">Abre el archivo <code>COPF_Drive.html</code> con un editor de texto (Notepad, VS Code). Busca estas líneas al inicio del script y reemplaza:</p>
+      <div class="step-code">CLIENT_ID: '538517964746-0ug2f4qaro40tvpuh9hgths3klsfgj45.apps.googleusercontent.com',<br>API_KEY:   'TU_API_KEY_AQUI',</div>
+      <p style="font-size:12px;color:var(--text2);margin-top:6px">Guarda el archivo y súbelo a Google Drive.</p>
+    </div>
+
+    <div class="setup-step">
+      <p style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px"><span class="setup-step-num">6</span> Pantalla de consentimiento OAuth</p>
+      <p style="font-size:12px;color:var(--text2)">En <strong>APIs → Pantalla de consentimiento OAuth</strong>. Tipo: <strong>Externo</strong>. Agrega tu correo como "usuario de prueba". Esto es necesario para que otros puedan iniciar sesión.</p>
+    </div>
+
+    <div class="info-box info-green" style="margin-top:14px">
+      ✅ Una vez configurado, los datos se guardarán automáticamente en tu Google Drive cada vez que hagas un cambio. El archivo <code>cooperativa_datos.json</code> aparecerá en tu Drive.
+    </div>
+  </div></div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  EXPORTAR EXCEL
+// ══════════════════════════════════════════════════════════════════
+function exportarExcel(){
+  const st=calcular();const hoy=new Date().toLocaleDateString('es-PE');const wb=XLSX.utils.book_new();
+  const wsR=XLSX.utils.aoa_to_sheet([[STATE.nombre+' — Sistema Contable'],['Generado el: '+hoy],[],['RESUMEN FINANCIERO'],['Indicador','Valor (S/)'],['Capital Total',st.totalCap],['Capital en Caja',st.cajaCap],['Capital Prestado',st.prestAct],['Intereses Cobrados',st.intCob],['Reserva (10%)',st.reserva],['Utilidades Distribuibles',st.dist],[],['PRÉSTAMOS'],['Estado','Cantidad'],['Cobrados',st.pagados],['Pendientes',st.pendientes],['Vencidos',st.vencidos],[],['POR SOCIO'],['Socio','Aportó','%','Le Corresponde','Recibió','Pendiente'],...st.socios.map(s=>[s.socio,s.totalAp,+(s.pct*100).toFixed(2),+s.ganado.toFixed(2),+s.recibido.toFixed(2),+s.pendiente.toFixed(2)])]);
+  wsR['!cols']=[{wch:30},{wch:18}];XLSX.utils.book_append_sheet(wb,wsR,'Resumen');
+  const wsPr=XLSX.utils.aoa_to_sheet([['#','Cliente','Fecha','Monto','Interés%','Total a Cobrar','Vencimiento','Estado'],...STATE.prestamos.slice().sort((a,b)=>a.fechaVenc<b.fechaVenc?-1:1).map((p,i)=>[i+1,p.cliente,p.fecha,+p.monto,+p.interesPct,+(+p.monto+getInt(p)).toFixed(2),p.fechaVenc,estadoEfectivo(p)])]);
+  XLSX.utils.book_append_sheet(wb,wsPr,'Préstamos');
+  const pen=STATE.prestamos.filter(p=>estadoEfectivo(p)==='PENDIENTE').slice().sort((a,b)=>a.fechaVenc<b.fechaVenc?-1:1);
+  const wsPen=XLSX.utils.aoa_to_sheet([['PENDIENTES — ordenados por vencimiento'],[],['#','Cliente','Monto','Total a Cobrar','Vencimiento','Días para Vencer'],...pen.map((p,i)=>{const d=Math.round((new Date(p.fechaVenc)-new Date(hoyStr()))/(1000*60*60*24));return[i+1,p.cliente,+p.monto,+(+p.monto+getInt(p)).toFixed(2),p.fechaVenc,d];})]);
+  XLSX.utils.book_append_sheet(wb,wsPen,'Pendientes');
+  const wsAp=XLSX.utils.aoa_to_sheet([['#','Fecha','Socio','Monto','Tipo','Concepto'],...STATE.aportes.slice().sort((a,b)=>a.fecha<b.fecha?-1:1).map((a,i)=>[i+1,a.fecha,a.socio,+a.monto,a.tipo,a.concepto||''])]);
+  XLSX.utils.book_append_sheet(wb,wsAp,'Aportes');
+  XLSX.writeFile(wb,`cooperativa_${hoyStr()}.xlsx`);toast('📊 Excel exportado');
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  ANÁLISIS IA
+// ══════════════════════════════════════════════════════════════════
+async function getAI(st){
+  STATE.aiLoading=true;render();
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:700,messages:[{role:"user",
+        content:`Eres contador experto en cooperativas en Perú. Analiza brevemente:\nCapital: ${sol(st.totalCap)} | Caja: ${sol(st.cajaCap)} | Prestado: ${sol(st.prestAct)}\nIntereses cobrados: ${sol(st.intCob)} | Distribuible: ${sol(st.dist)}\nPréstamos: ${st.pagados} pagados, ${st.pendientes} pendientes, ${st.vencidos} vencidos\n${st.socios.map(s=>`${s.socio}: ${sol(s.totalAp)} (${pctF(s.pct)}), pendiente ${sol(s.pendiente)}`).join(' | ')}\nDa 3 observaciones concretas en español.`}]})});
+    const d=await res.json();STATE.aiText=d.content[0].text;
+  }catch(e){STATE.aiText="Error de conexión.";}
+  STATE.aiLoading=false;render();
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  INICIALIZAR — esperar a que carguen las APIs de Google
+// ══════════════════════════════════════════════════════════════════
+render(); // Render inicial (sin login)
+
+// Callbacks cuando cargan los scripts de Google
+window.addEventListener('load',()=>{
+  if(typeof gapi!=='undefined') window.onGapiLoad();
+  if(typeof google!=='undefined'&&google.accounts) window.onGsiLoad();
+});
+// Polyfill para cuando los scripts cargan después del load
+const _orig_gapi_onload = window.gapiOnLoad;
+Object.defineProperty(window,'gapi',{set(v){Object.defineProperty(window,'gapi',{value:v,writable:true,configurable:true});if(v&&v.load)window.onGapiLoad();},get(){return undefined;},configurable:true});
+</script>
+
+<!-- Cargar APIs de Google -->
+<script src="https://apis.google.com/js/api.js?onload=onGapiLoad"></script>
+<script src="https://accounts.google.com/gsi/client" onload="onGsiLoad()" async defer></script>
+</body>
+</html>
