@@ -336,66 +336,81 @@ window.onGapiLoad = function(){
     gapiReady=true; intentarAutoLogin();
   });
 };
+
 window.onGsiLoad = function(){
-  if(!CONFIG_LISTO)return;
-  tokenClient=google.accounts.oauth2.initTokenClient({
-    client_id:CONFIG.CLIENT_ID,
-    scope:CONFIG.SCOPES,
-    callback:async(resp)=>{
-      if(resp.error){setSyncStatus('error');return;}
-      accessToken=resp.access_token;
-      await finalizarLogin();
+  if(!CONFIG_LISTO){ render(); return; }
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CONFIG.CLIENT_ID,
+    scope: CONFIG.SCOPES,
+    // Sin prompt para reutilizar sesión existente sin popup
+    callback: (resp) => {
+      if(resp.error || !resp.access_token){
+        console.error('Error token:', resp);
+        STATE.cargando=false; render();
+        toast('❌ Error al obtener acceso de Google');
+        return;
+      }
+      accessToken = resp.access_token;
+      // Usar el token inmediatamente, sin delay
+      finalizarLogin();
     }
   });
   gsiReady=true; intentarAutoLogin();
 };
 
 function intentarAutoLogin(){
-  if(!gapiReady||!gsiReady)return;
-  render(); // Mostrar pantalla de login — siempre pedir token fresco
+  if(!gapiReady||!gsiReady) return;
+  render();
 }
 
 async function finalizarLogin(){
   STATE.cargando=true; render();
   try{
-    // Verificar que el token funciona obteniendo info del usuario
-    const r=await driveRequest('https://www.googleapis.com/oauth2/v3/userinfo');
-    if(!r.ok) throw new Error('Token inválido: '+r.status);
-    currentUser=await r.json();
-    if(!currentUser||!currentUser.email) throw new Error('No se pudo obtener email del usuario');
-    // Buscar/crear archivos en Drive
-    [driveFileId,permFileId]=await Promise.all([
-      buscarOCrearArchivo(CONFIG.DATA_FILE),
-      buscarOCrearArchivo(CONFIG.PERM_FILE)
-    ]);
-    // Cargar permisos primero
+    // Obtener info del usuario usando el token recién recibido
+    const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{
+      headers:{'Authorization':'Bearer '+accessToken}
+    });
+    if(!r.ok){
+      const txt = await r.text();
+      throw new Error('Error userinfo '+r.status+': '+txt);
+    }
+    currentUser = await r.json();
+    if(!currentUser||!currentUser.email) throw new Error('No se recibió email');
+
+    // Buscar/crear archivos JSON en Drive
+    driveFileId  = await buscarOCrearArchivo(CONFIG.DATA_FILE);
+    permFileId   = await buscarOCrearArchivo(CONFIG.PERM_FILE);
+
+    // Cargar permisos
     await cargarPermisos();
-    // Si es el primer usuario → asignar rol admin automáticamente
     if(permisos.length===0){
-      permisos=[{email:currentUser.email,nombre:currentUser.name||currentUser.email,rol:'admin'}];
+      permisos=[{email:currentUser.email, nombre:currentUser.name||currentUser.email, rol:'admin'}];
       await guardarPermisos();
     }
-    currentRole=getRolUsuario(currentUser.email);
-    // Cargar datos del Drive (todos los roles ven los datos)
+    currentRole = getRolUsuario(currentUser.email);
+
+    // Cargar datos
     await cargarDatosDesdesDrive();
+
     STATE.cargando=false; setSyncStatus('ok'); render();
   }catch(e){
-    console.error('Error en finalizarLogin:',e);
-    STATE.cargando=false; accessToken=null; render();
-    toast('❌ Error al conectar: '+e.message);
+    console.error('finalizarLogin error:', e);
+    STATE.cargando=false; accessToken=null; driveFileId=null; permFileId=null;
+    render();
+    toast('❌ '+e.message);
   }
 }
 
 function iniciarLogin(){
-  if(!CONFIG_LISTO){abrirModal('setup');return;}
-  if(!gsiReady){toast('⏳ Cargando APIs de Google...');return;}
+  if(!CONFIG_LISTO){ abrirModal('setup'); return; }
+  if(!gsiReady){ toast('⏳ Cargando Google...'); return; }
+  // prompt:'' reutiliza sesión activa sin popup extra
   tokenClient.requestAccessToken({prompt:''});
 }
 
 function cerrarSesion(){
-  if(accessToken) google.accounts.oauth2.revoke(accessToken,()=>{});
-  accessToken=null; currentUser=null; currentRole=null;
-  
+  try{ if(accessToken) google.accounts.oauth2.revoke(accessToken,()=>{}); }catch(e){}
+  accessToken=null; currentUser=null; currentRole=null; driveFileId=null; permFileId=null;
   clearTimeout(saveTimer); render();
 }
 
