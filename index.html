@@ -172,6 +172,8 @@ const CONFIG = {
   SCOPES:    'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file',
   DATA_FILE: 'cooperativa_datos.json',
   PERM_FILE: 'cooperativa_permisos.json',
+  // ID fijo del archivo compartido en Google Drive (no cambiar)
+  SHARED_FILE_ID: '1S2i6FPRkJCfIA2Fkk09diUJSJhfLZxuP',
 };
 const CONFIG_LISTO = !CONFIG.CLIENT_ID.includes('TU_CLIENT_ID');
 
@@ -288,6 +290,7 @@ async function ejecutarGuardado(){
     const ok = await guardarArchivoJSON(driveFileId,{
       socios:STATE.socios, aportes:STATE.aportes,
       prestamos:STATE.prestamos, pagos:STATE.pagos, nombre:STATE.nombre,
+      permisos:permisos,
       ultimaActualizacion:new Date().toISOString(),
       actualizadoPor:currentUser?.email||'desconocido'
     });
@@ -342,14 +345,18 @@ function detenerSyncAutomatico(){
 }
 
 async function cargarPermisos(){
-  if(!permFileId)return;
-  const d = await leerArchivoJSON(permFileId);
+  if(!driveFileId)return;
+  const d = await leerArchivoJSON(driveFileId);
   if(d&&Array.isArray(d.permisos)) permisos=d.permisos;
+  else permisos=[];
 }
 
 async function guardarPermisos(){
-  if(!permFileId)return;
-  await guardarArchivoJSON(permFileId,{permisos});
+  if(!driveFileId||!accessToken)return;
+  // Leer datos actuales y actualizar solo los permisos
+  const d = await leerArchivoJSON(driveFileId)||{};
+  await guardarArchivoJSON(driveFileId,{...d, permisos:permisos,
+    ultimaActualizacion:new Date().toISOString()});
 }
 
 function getRolUsuario(email){
@@ -410,14 +417,24 @@ async function finalizarLogin(){
     currentUser = await r.json();
     if(!currentUser||!currentUser.email) throw new Error('No se recibió email');
 
-    // Buscar/crear archivos JSON en Drive
-    driveFileId  = await buscarOCrearArchivo(CONFIG.DATA_FILE);
-    permFileId   = await buscarOCrearArchivo(CONFIG.PERM_FILE);
+    // Usar archivo de datos fijo (compartido por el administrador)
+    driveFileId = CONFIG.SHARED_FILE_ID;
+    // Permisos se gestionan internamente dentro del mismo archivo de datos
+    permFileId  = CONFIG.SHARED_FILE_ID;
 
-    // Cargar permisos
+    // Cargar permisos del archivo compartido
     await cargarPermisos();
-    if(permisos.length===0){
-      permisos=[{email:currentUser.email, nombre:currentUser.name||currentUser.email, rol:'admin'}];
+    // Solo el primer usuario (admin) puede auto-asignarse rol
+    // Los demás quedan como lector hasta que admin los cambie
+    const yaRegistrado = permisos.find(p=>p.email===currentUser.email);
+    if(!yaRegistrado){
+      if(permisos.length===0){
+        // Primer usuario = admin
+        permisos=[{email:currentUser.email, nombre:currentUser.name||currentUser.email, rol:'admin'}];
+      } else {
+        // Usuarios nuevos = lector por defecto
+        permisos=[...permisos,{email:currentUser.email, nombre:currentUser.name||currentUser.email, rol:'lector'}];
+      }
       await guardarPermisos();
     }
     currentRole = getRolUsuario(currentUser.email);
