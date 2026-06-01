@@ -389,7 +389,7 @@ async function finalizarLogin(){
 function iniciarLogin(){
   if(!CONFIG_LISTO){abrirModal('setup');return;}
   if(!gsiReady){toast('⏳ Cargando APIs de Google...');return;}
-  tokenClient.requestAccessToken({prompt:'consent'});
+  tokenClient.requestAccessToken({prompt:''});
 }
 
 function cerrarSesion(){
