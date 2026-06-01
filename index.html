@@ -169,7 +169,7 @@ const CONFIG = {
   CLIENT_ID: '538517964746-0ug2f4qaro40tvpuh9hgths3klsfgj45.apps.googleusercontent.com',
   API_KEY:   'AIzaSyDxF0WuFqFPXc7bA_fZwSOsfdWHnsH8YGM',
   // No cambies estas líneas
-  SCOPES:    'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+  SCOPES:    'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file',
   DATA_FILE: 'cooperativa_datos.json',
   PERM_FILE: 'cooperativa_permisos.json',
 };
@@ -308,6 +308,39 @@ async function cargarDatosDesdesDrive(){
   }
 }
 
+// ── Auto-sincronización cada 30 segundos ─────────────────────────
+let syncInterval=null, ultimaActualizacionRemota=null;
+
+async function verificarCambiosRemotos(){
+  if(!driveFileId||!accessToken||syncStatus==='saving')return;
+  try{
+    const r=await driveRequest(`https://www.googleapis.com/drive/v3/files/${driveFileId}?fields=modifiedTime`);
+    if(!r.ok)return;
+    const meta=await r.json();
+    const remota=meta.modifiedTime;
+    if(ultimaActualizacionRemota&&remota!==ultimaActualizacionRemota){
+      const vista=STATE.view;
+      await cargarDatosDesdesDrive();
+      STATE.view=vista;
+      render();
+      const txt=qs('.sync-txt');
+      if(txt){txt.textContent='✨ Datos actualizados';setTimeout(()=>setSyncStatus('ok'),2500);}
+    }
+    ultimaActualizacionRemota=remota;
+  }catch(e){}
+}
+
+function iniciarSyncAutomatico(){
+  if(syncInterval)clearInterval(syncInterval);
+  driveRequest(`https://www.googleapis.com/drive/v3/files/${driveFileId}?fields=modifiedTime`)
+    .then(r=>r.json()).then(m=>{ultimaActualizacionRemota=m.modifiedTime;}).catch(()=>{});
+  syncInterval=setInterval(verificarCambiosRemotos,30000);
+}
+
+function detenerSyncAutomatico(){
+  if(syncInterval){clearInterval(syncInterval);syncInterval=null;}
+}
+
 async function cargarPermisos(){
   if(!permFileId)return;
   const d = await leerArchivoJSON(permFileId);
@@ -393,6 +426,8 @@ async function finalizarLogin(){
     await cargarDatosDesdesDrive();
 
     STATE.cargando=false; setSyncStatus('ok'); render();
+    // Iniciar sync automático cada 30s
+    iniciarSyncAutomatico();
   }catch(e){
     console.error('finalizarLogin error:', e);
     STATE.cargando=false; accessToken=null; driveFileId=null; permFileId=null;
@@ -411,7 +446,7 @@ function iniciarLogin(){
 function cerrarSesion(){
   try{ if(accessToken) google.accounts.oauth2.revoke(accessToken,()=>{}); }catch(e){}
   accessToken=null; currentUser=null; currentRole=null; driveFileId=null; permFileId=null;
-  clearTimeout(saveTimer); render();
+  clearTimeout(saveTimer); detenerSyncAutomatico(); render();
 }
 
 // ══════════════════════════════════════════════════════════════════
